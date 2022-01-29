@@ -2,11 +2,28 @@
 const { ApolloServer } = require('apollo-server')
 
 const typeDefs = `
+  enum PhotoCategory {
+    SELFIE
+    PORTRAIT
+    ACTION
+    LANDSCAPE
+    GRAPHIC
+  }
+
   type Photo {
     id: ID!
     url: String!
     name: String!
     description: String
+    category: PhotoCategory!
+    postedBy: User!
+  }
+
+  type User {
+    githubLogin: ID!
+    name: String
+    avatar: String
+    postedPhotos: [Photo!]!
   }
 
   type Query {
@@ -15,19 +32,46 @@ const typeDefs = `
   }
 
   type Mutation {
-    postPhoto(
-      name: String!
-      description: String
-    ): Photo!
+    postPhoto(input: PostPhotoInput!): Photo!
+  }
+
+  input PostPhotoInput {
+    name: String!
+    category: PhotoCategory=PORTRAIT
+    description: String
   }
 `
 // A variable that we will increment for unique ids
 var _id = 0
 
-var photos = []
+var users = [
+  { "githubLogin": "mHattrup", "name": "Mike Hattrup" },
+  { "githubLogin": "gPlake", "name": "Glen Plake" },
+  { "githubLogin": "sSchmidt", "name": "Scot Schmidt" }
+]
 
-// A data type to store our photos in memory
-var photos = []
+var photos = [
+  {
+    "id": "1",
+    "name": "Dropping the Heart Chute",
+    "description": "The heart chute is one of my favorite chutes",
+    "category": "ACTION",
+    "githubUser": "gPlake"
+  },
+  {
+    "id": "2",
+    "name": "Enjoying the sunshine",
+    "category": "SELFIE",
+    "githubUser": "sSchmidt"
+  },
+  {
+    "id": "3",
+    "name": "Gunbarrel 25",
+    "description": "25 laps on gunbarrel today",
+    "category": "LANDSCAPE",
+    "githubUser": "sSchmidt"
+  }
+]
 
 const resolvers = {
   Query: {
@@ -41,7 +85,7 @@ const resolvers = {
       // Create a new photo and generate an id
       var newPhoto = {
         id: _id++,
-        ...args
+        ...args.input
       }
       photos.push(newPhoto)
       // Return the new photo
@@ -49,7 +93,15 @@ const resolvers = {
     }
   },
   Photo: {
-    url: parent => `http://yoursite.com/img/${parent.id}.jpg`
+    url: parent => `http://yoursite.com/img/${parent.id}.jpg`,
+    postedBy: parent => {
+      return users.find(u => u.githubLogin === parent.githubUser)
+    }
+  },
+  User: {
+    postedPhotos: parent => {
+      return photos.filter(p => p.githubUser === parent.githubLogin)
+    }
   }
 }
 
