@@ -33,7 +33,7 @@ const resolvers = {
   Query: {
     // return the length of the photos array
     totalPhotos: () => photos.length,
-    allPhotos: () => photos
+    allPhotos: () => photos,
   },
   // Mutation and postPhotos resolver
   Mutation: {
@@ -47,6 +47,9 @@ const resolvers = {
       // Return the new photo
       return newPhoto
     }
+  },
+  Photo: {
+    url: parent => `http://yoursite.com/img/${parent.id}.jpg`
   }
 }
 
